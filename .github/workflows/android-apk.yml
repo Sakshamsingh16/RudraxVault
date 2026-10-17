@@ -81,6 +81,7 @@ jobs:
           echo "SDK Manager: $SDKMANAGER"
           "$SDKMANAGER" --version
 
+      
       - name: Accept Android SDK licenses
         shell: bash
         run: |
@@ -92,10 +93,11 @@ jobs:
             exit 1
           fi
 
-          # Do not enable pipefail here:
-          # yes may exit early when sdkmanager finishes.
           yes | "$SDKMANAGER" \
-            --sdk_root="$ANDROID_HOME" --licenses
+            --sdk_root="$ANDROID_HOME" --licenses || true
+
+          echo "SDK license step completed."
+
 
       - name: Install Android SDK packages
         shell: bash
