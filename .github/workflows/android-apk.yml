@@ -4,18 +4,25 @@ name: Build Rudrax Vault APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Check project ZIP
+        run: |
+          ls -la
+          test -f RudraxVault-GitHub-Ready.zip
 
       - name: Extract Android project
         run: |
@@ -31,18 +38,34 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: false
 
-      - name: Install Android SDK
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Accept Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Build APK
+      - name: Build Debug APK
         working-directory: RudraxVault
-        run: gradle --no-daemon assembleDebug
+        run: |
+          gradle --no-daemon assembleDebug
+
+      - name: Verify APK
+        run: |
+          test -f RudraxVault/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh RudraxVault/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -50,4 +73,4 @@ jobs:
           name: RudraxVault-debug-apk
           path: RudraxVault/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          
+          retention-days: 7
