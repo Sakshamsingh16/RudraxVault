@@ -23,6 +23,7 @@ jobs:
         shell: bash
         run: |
           ls -lah
+
           if [ ! -f "RudraxVault-GitHub-Ready.zip" ]; then
             echo "ERROR: RudraxVault-GitHub-Ready.zip not found"
             exit 1
@@ -71,30 +72,36 @@ jobs:
             exit 1
           fi
 
-          echo "SDK Manager found: $SDKMANAGER"
-
           if [ ! -x "$SDKMANAGER" ]; then
             echo "ERROR: sdkmanager is not executable"
             ls -l "$SDKMANAGER"
             exit 1
           fi
 
+          echo "SDK Manager: $SDKMANAGER"
           "$SDKMANAGER" --version
 
       - name: Accept Android SDK licenses
         shell: bash
         run: |
-          set -o pipefail
-
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
             -type f -name sdkmanager 2>/dev/null | head -n 1)"
 
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager not found"
+            exit 1
+          fi
+
+          # Do not enable pipefail here:
+          # yes may exit early when sdkmanager finishes.
           yes | "$SDKMANAGER" \
             --sdk_root="$ANDROID_HOME" --licenses
 
       - name: Install Android SDK packages
         shell: bash
         run: |
+          set -e
+
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
             -type f -name sdkmanager 2>/dev/null | head -n 1)"
 
